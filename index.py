@@ -41,9 +41,9 @@ def get_multifield_embed(
 ):
     """
 
-    :param questionTitle: 
-    :param questionDate: 
-    :param questionLink: 
+    :param questionTitle:
+    :param questionDate:
+    :param questionLink:
     :param title:  (Default value = "Daily LC")
     :param description:  (Default value = "This is the Daily LC Question")
 
