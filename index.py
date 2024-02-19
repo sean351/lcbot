@@ -59,7 +59,8 @@ def get_multifield_embed(
 def getDailyLC():
     """ """
     # Send the POST request with the query
-    response = requests.post(os.environ.get("LC_ENDPOINT"), json={"query": query})
+    response = requests.post(os.environ.get("LC_ENDPOINT"),
+                             json={"query": query})
 
     # Check for successful response
     if response.status_code == 200:
