@@ -43,7 +43,7 @@ def get_multifield_embed(questionTitle, questionDate, questionLink, title="Daily
     return embed
 
 
-def getDailyLC():
+def getDailyLC(query):
     # Send the POST request with the query
     response = requests.post(os.environ.get('LC_ENDPOINT'), json={"query": query})
 
@@ -68,6 +68,6 @@ async def on_message(message):
         return
 
     if message.content.startswith(prefix + "daily"):
-        await message.channel.send(embed=getDailyLC())
+        await message.channel.send(embed=getDailyLC(daily_query))
 
 client.run(os.environ.get('BOT_TOKEN'))
