@@ -1,8 +1,8 @@
+import os
+
 import discord
 import dotenv
 import requests
-import os
-
 
 dotenv.load_dotenv()
 prefix = "!"
@@ -31,7 +31,23 @@ query questionOfToday {
 intents = discord.Intents.default()
 intents.message_content = True
 
-def get_multifield_embed(questionTitle, questionDate, questionLink, title="Daily LC", description="This is the Daily LC Question"):
+
+def get_multifield_embed(
+    questionTitle,
+    questionDate,
+    questionLink,
+    title="Daily LC",
+    description="This is the Daily LC Question",
+):
+    """
+
+    :param questionTitle:
+    :param questionDate:
+    :param questionLink:
+    :param title:  (Default value = "Daily LC")
+    :param description:  (Default value = "This is the Daily LC Question")
+
+    """
     embed = discord.Embed(title=title, description=description)
     embed.add_field(name="Title", value=questionTitle, inline=False)
     embed.add_field(name="Date", value=questionDate, inline=True)
@@ -41,23 +57,31 @@ def get_multifield_embed(questionTitle, questionDate, questionLink, title="Daily
 
 
 def getDailyLC():
+    """ """
     # Send the POST request with the query
-    response = requests.post(os.environ.get('LC_ENDPOINT'), json={"query": query})
+    response = requests.post(os.environ.get("LC_ENDPOINT"),
+                             json={"query": query})
 
     # Check for successful response
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()
-        
+
         # Access the data
         for value in data["activeDailyCodingChallengeQuestion"]:
-            return get_multifield_embed(value["question"]["title"], value["date"], "https://leetcode.com" + value["link"])
+            return get_multifield_embed(
+                value["question"]["title"],
+                value["date"],
+                "https://leetcode.com" + value["link"],
+            )
     else:
         print(f"Error: {response.status_code}")
+
 
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
+
 
 @client.event
 async def on_message(message):
@@ -67,4 +91,5 @@ async def on_message(message):
     if message.content.startswith(prefix + "daily"):
         await message.channel.send(embed=getDailyLC())
 
-client.run(os.environ.get('BOT_TOKEN'))
+
+client.run(os.environ.get("BOT_TOKEN"))
