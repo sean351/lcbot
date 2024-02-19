@@ -2,6 +2,8 @@ import discord
 import dotenv
 import requests
 import os
+import threading
+import time
 
 dotenv.load_dotenv()
 prefix = "!"
@@ -34,12 +36,19 @@ query questionOfToday {
 intents = discord.Intents.default()
 intents.message_content = True
 
-def get_multifield_embed(questionTitle, questionDate, questionLink, title="Daily LC", description="This is the Daily LC Question"):
-    embed = discord.Embed(title=title, description=description)
-    embed.add_field(name="Title", value=questionTitle, inline=False)
-    embed.add_field(name="Date", value=questionDate, inline=True)
-    embed.add_field(name="Link", value=questionLink, inline=False)
+def send_heartbeat():
+    while True:
+        # Send your heartbeat message (e.g., log it, send to server)
+        print("Sending heartbeat...")
+        time.sleep(60)  # Send heartbeat every minute
 
+thread = threading.Thread(target=send_heartbeat)
+thread.start()
+
+def get_multifield_embed(*args, title="Daily LC", description="This is the Daily LC Question"):
+    embed = discord.Embed(title=title, description=description)
+    for embedArg in args:
+        embed.add_field(name=embedArg["title"], value=embedArg["value"], inline=True)
     return embed
 
 
@@ -51,6 +60,11 @@ def getDailyLC(query):
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()["data"]["activeDailyCodingChallengeQuestion"]
+        response_dict = {
+            "title": data["question"]["title"],
+            "date": data["date"],
+            "link": 
+        }
         return get_multifield_embed(data["question"]["title"], data["date"], "https://leetcode.com" + data["link"])
         
     else:
