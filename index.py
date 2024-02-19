@@ -3,9 +3,12 @@ import dotenv
 import requests
 import os
 
-
 dotenv.load_dotenv()
 prefix = "!"
+
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents=intents)
 
 daily_query = """
 query questionOfToday {
