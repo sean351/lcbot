@@ -50,11 +50,9 @@ def getDailyLC(query):
     # Check for successful response
     if response.status_code == 200:
         # Parse the JSON response
-        data = response.json()
+        data = response.json()["data"]["activeDailyCodingChallengeQuestion"]
+        return get_multifield_embed(data["question"]["title"], data["date"], "https://leetcode.com" + data["link"])
         
-        # Access the data
-        for value in data["activeDailyCodingChallengeQuestion"]:
-            return get_multifield_embed(value["question"]["title"], value["date"], "https://leetcode.com" + value["link"])
     else:
         print(f"Error: {response.status_code}")
 
