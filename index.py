@@ -1,8 +1,8 @@
+import os
+
 import discord
 import dotenv
 import requests
-import os
-
 
 dotenv.load_dotenv()
 prefix = "!"
