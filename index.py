@@ -39,6 +39,15 @@ def get_multifield_embed(
     title="Daily LC",
     description="This is the Daily LC Question",
 ):
+    """
+
+    :param questionTitle: 
+    :param questionDate: 
+    :param questionLink: 
+    :param title:  (Default value = "Daily LC")
+    :param description:  (Default value = "This is the Daily LC Question")
+
+    """
     embed = discord.Embed(title=title, description=description)
     embed.add_field(name="Title", value=questionTitle, inline=False)
     embed.add_field(name="Date", value=questionDate, inline=True)
@@ -48,6 +57,7 @@ def get_multifield_embed(
 
 
 def getDailyLC():
+    """ """
     # Send the POST request with the query
     response = requests.post(os.environ.get("LC_ENDPOINT"), json={"query": query})
 
