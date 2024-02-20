@@ -2,8 +2,6 @@ import discord
 import dotenv
 import requests
 import os
-import threading
-import time
 
 dotenv.load_dotenv()
 prefix = "!"
@@ -36,21 +34,11 @@ query questionOfToday {
 intents = discord.Intents.default()
 intents.message_content = True
 
-def send_heartbeat():
-    while True:
-        # Send your heartbeat message (e.g., log it, send to server)
-        print("Sending heartbeat...")
-        time.sleep(60)  # Send heartbeat every minute
-
-thread = threading.Thread(target=send_heartbeat)
-thread.start()
-
 def get_multifield_embed(embedDict, title="Daily LC", description="This is the Daily LC Question"):
     embed = discord.Embed(title=title, description=description)
     for key, value in embedDict.items():
         embed.add_field(name=key, value=value, inline=True)
     return embed
-
 
 def getDailyLC(query):
     # Send the POST request with the query
