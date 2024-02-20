@@ -45,10 +45,10 @@ def send_heartbeat():
 thread = threading.Thread(target=send_heartbeat)
 thread.start()
 
-def get_multifield_embed(*args, title="Daily LC", description="This is the Daily LC Question"):
+def get_multifield_embed(embedDict, title="Daily LC", description="This is the Daily LC Question"):
     embed = discord.Embed(title=title, description=description)
-    for embedArg in args:
-        embed.add_field(name=embedArg["title"], value=embedArg["value"], inline=True)
+    for key, value in embedDict.items():
+        embed.add_field(name=key, value=value, inline=True)
     return embed
 
 
@@ -60,12 +60,11 @@ def getDailyLC(query):
     if response.status_code == 200:
         # Parse the JSON response
         data = response.json()["data"]["activeDailyCodingChallengeQuestion"]
-        response_dict = {
+        return get_multifield_embed({
             "title": data["question"]["title"],
             "date": data["date"],
-            "link": 
-        }
-        return get_multifield_embed(data["question"]["title"], data["date"], "https://leetcode.com" + data["link"])
+            "link": "https://leetcode.com" + data["link"]
+        })
         
     else:
         print(f"Error: {response.status_code}")
