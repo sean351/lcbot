@@ -4,11 +4,11 @@ import requests
 import os
 
 dotenv.load_dotenv()
-prefix = "!"
+prefix = "?"
 
 intents = discord.Intents.default()
 intents.message_content = True
-client = discord.Client(intents=intents)
+client = discord.Client(intents=intents, prefix='?')
 
 daily_query = """
 query questionOfToday {
@@ -57,6 +57,10 @@ def getDailyLC(query):
     else:
         print(f"Error: {response.status_code}")
 
+@client.command()
+async def ping(ctx):
+     await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
+
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
@@ -67,6 +71,6 @@ async def on_message(message):
         return
 
     if message.content.startswith(prefix + "daily"):
-        await message.channel.send(embed=getDailyLC(daily_query))
+        await message.channel.send(embed=getDailyLC(daily_query))\
 
 client.run(os.environ.get('BOT_TOKEN'))
