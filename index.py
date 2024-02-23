@@ -57,10 +57,6 @@ def getDailyLC(query):
     else:
         print(f"Error: {response.status_code}")
 
-@client.command()
-async def ping(ctx):
-     await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
-
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
@@ -71,6 +67,9 @@ async def on_message(message):
         return
 
     if message.content.startswith(prefix + "daily"):
-        await message.channel.send(embed=getDailyLC(daily_query))\
+        await message.channel.send(embed=getDailyLC(daily_query))
+    
+    if message.content.startswith(prefix + "ping"):
+        await message.send(f'Pong! In {round(client.latency * 1000)}ms')
 
 client.run(os.environ.get('BOT_TOKEN'))
