@@ -72,4 +72,4 @@ async def on_message(message):
     if message.content.startswith(prefix + "ping"):
         await message.send(f'Pong! In {round(client.latency * 1000)}ms')
 
-client.run(os.environ.get('BOT_TOKEN'))
+client.run(os.environ.get('DISCORD_BOT_TOKEN'))
