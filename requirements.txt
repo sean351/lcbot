@@ -1,4 +1,5 @@
 discord.py
 requests
 python-dotenv
+py-cord
 gql[all]

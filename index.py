@@ -10,14 +10,15 @@ import json
 
 
 def configure_client():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     dotenv.load_dotenv()
     prefix = "?"
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True
     client = commands.Bot(intents=intents, command_prefix=prefix)
     transport = AIOHTTPTransport(
-        url=os.environ.get("LC_ENDPOINT"),
+        url="https://leetcode.com/graphql",
         headers={"cookie": os.environ.get("LC_COOKIE")}
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
@@ -198,8 +199,12 @@ async def daily(ctx):
         main_embed,
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
+    channel = client.get_channel(ctx.channel.id)
+    today = date.today().strftime("%Y-%m-%d")
+    thread = await channel.create_thread(name=f"Daily LC Thread For {today}", message=None, auto_archive_duration=60, type=discord.ChannelType.public_thread, reason="thread for Daily LC Question")
+    await thread.send(embeds=embeds)
 
-    await ctx.send(embeds=embeds)
+
 
 
 @client.command(name="question")
@@ -209,8 +214,9 @@ async def question(ctx, arg):
         main_embed,
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
-
-    await ctx.send(embeds=embeds)
+    channel = client.get_channel(ctx.channel.id)
+    thread = await channel.create_thread(name=f"{arg} Thread", message=None, auto_archive_duration=60, type=discord.ChannelType.public_thread, reason="thread for LC Question")
+    await thread.send(embeds=embeds)
 
 
 @client.command(name="ping")
