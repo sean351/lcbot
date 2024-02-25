@@ -7,6 +7,8 @@ import logging
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 import json
+import sentry_sdk
+
 
 
 def configure_client():
@@ -21,6 +23,12 @@ def configure_client():
         headers={"cookie": os.environ.get("LC_COOKIE")}
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
+    sentry_sdk.init(
+    dsn=os.environ.get("SENTRY_DSN"),
+
+    # Enable performance monitoring
+    enable_tracing=True,
+)
     return client, gql_client
 
 
