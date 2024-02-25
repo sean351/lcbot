@@ -168,7 +168,6 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
         elif "question" in query_type:
             return {
                 "title": data["title"],
-                "date": date.today().strftime("%Y-%m-%d"),
                 "link": f"https://leetcode.com/{data['titleSlug']}",
                 "paid_only": data["paidOnly"],
                 "topics": ",".join(item["name"] for item in data["topicTags"]),
