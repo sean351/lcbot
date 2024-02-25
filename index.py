@@ -233,7 +233,6 @@ async def question(ctx, arg):
     thread = await channel.create_thread(name=f"{arg} Thread", message=None, auto_archive_duration=60, type=discord.ChannelType.public_thread, reason="thread for LC Question")
     await thread.send(embeds=embeds)
 
-
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
     await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
