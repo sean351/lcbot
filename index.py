@@ -10,13 +10,12 @@ import json
 
 
 def configure_client():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     dotenv.load_dotenv()
-    prefix = "?"
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
-    client = commands.Bot(intents=intents, command_prefix=prefix)
+    client = commands.Bot(intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
         headers={"cookie": os.environ.get("LC_COOKIE")}
@@ -26,6 +25,20 @@ def configure_client():
 
 
 client, gql_client = configure_client()
+
+
+# Define a function to log events
+async def log_event(event):
+    # Extract relevant information from the event
+    # (e.g., event type, timestamp, user, message, etc.)
+    message = f"Event: {event.__class__.__name__}"
+    # Add further details based on the event type
+    if isinstance(event, discord.Message):
+        message += f"\nContent: {event.content}"
+    elif isinstance(event, discord.MemberJoin):
+        message += f"\nJoined: {event.member}"
+    # ... Add logic for other event types
+    logging.info(message)
 
 company_query = gql(
     """
@@ -227,10 +240,8 @@ async def ping(ctx):
 
 # Events
 @client.event
-async def on_member_join(member):
-    await member.send(
-        f'Welcome to the server, {member.mention}! Enjoy your stay here.'
-    )
+async def on_event(event):
+    await log_event(event)
 
 @client.event
 async def on_ready():
