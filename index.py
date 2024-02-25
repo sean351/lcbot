@@ -15,7 +15,7 @@ def configure_client():
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
-    client = commands.Bot(intents=intents, command_prefix=os.environ.get("PREFIX"))
+    client = commands.AutoShardedBot(intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
         headers={"cookie": os.environ.get("LC_COOKIE")}
