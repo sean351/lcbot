@@ -1,24 +1,30 @@
 import discord
-import dotenv
+from discord.ext import commands
+from datetime import date
 import os
+import dotenv
 import logging
-import json
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
+import json
 
-# Setup and Config clients
-logging.basicConfig(level=logging.DEBUG)
-dotenv.load_dotenv()
-prefix = "?"
-intents = discord.Intents.default()
-intents.message_content = True
-client = discord.Client(intents=intents, prefix='?')
-transport = AIOHTTPTransport(url=os.environ.get("LC_ENDPOINT"), headers={
-    "cookie": os.environ.get("LC_COOKIE")
-})
-gql_client = Client(transport=transport, fetch_schema_from_transport=False)
-intents = discord.Intents.default()
-intents.message_content = True
+
+def configure_client():
+    logging.basicConfig(level=logging.DEBUG)
+    dotenv.load_dotenv()
+    prefix = "?"
+    intents = discord.Intents.default()
+    intents.message_content = True
+    client = commands.Bot(intents=intents, command_prefix=prefix)
+    transport = AIOHTTPTransport(
+        url=os.environ.get("LC_ENDPOINT"),
+        headers={"cookie": os.environ.get("LC_COOKIE")}
+    )
+    gql_client = Client(transport=transport, fetch_schema_from_transport=False)
+    return client, gql_client
+
+
+client, gql_client = configure_client()
 
 company_query = gql(
     """
@@ -37,20 +43,30 @@ query questionOfToday {
 		date
 		link
 		question {
-			acRate
 			difficulty
-			freqBar
-			frontendQuestionId: questionFrontendId
-			isFavor
 			paidOnly: isPaidOnly
-			status
 			title
             titleSlug
-			hasVideoSolution
-			hasSolution
             topicTags {
                 name
             }
+		}
+	}
+}
+"""
+)
+
+question_query = gql(
+    """
+query questionTitle($titleSlug: String!) {
+	question(titleSlug: $titleSlug) {
+		title
+		titleSlug
+		paidOnly: isPaidOnly
+		difficulty
+		categoryTitle
+		topicTags {
+			name
 		}
 	}
 }
@@ -73,87 +89,102 @@ query SimilarQuestions($titleSlug: String!) {
 )
 
 
-def create_similar_embed(question_list):
-    embed = discord.Embed(title="Similar Questions")
+async def get_company_stats_embed(gql_client, company_query, title_slug):
+    """Fetches company stats and creates an embed with company encounter summaries."""
 
-    for question in question_list:
-        # Extract relevant information
-        difficulty = question["difficulty"]
-        title = question["title"]
-        link = "https://leetcode.com/problems/" + question["titleSlug"]
-        is_paid_only = question["isPaidOnly"]
+    async def extract_company_data(result):
+        """Extracts company data from the GraphQL result."""
+        return result["question"]["companyTagStats"]
 
-        # Create embed field with proper formatting
-        field_text = f"{link}"
-        title_text = f"{title}"
-        if is_paid_only:
-            title_text += " (Paid Only)"
+    async def create_embed(company_data):
+        """Creates an embed with fields for each company category."""
+        embed = discord.Embed(title="Company Encounter Summary")
+        for category, companies in company_data.items():
+            field_value = "\n".join(
+                f"✅ **{company['name']}** ({company['timesEncountered']})"
+                for company in companies
+            )
+            embed.add_field(
+                name=f"Category {category}", value=field_value, inline=False)
+        return embed
 
-        embed.add_field(name=title_text, value=field_text, inline=False)
-
-    return embed
-
-
-def create_company_embed(company_data):
-    # Remove unnecessary quotes
-    data = json.loads(company_data)
-
-    embed = discord.Embed(title="Company Encounter Summary")
-
-    # Loop through each category in the data
-    for category, companies in data.items():
-        # Create a field for each category
-        field_name = f"Category {category}"
-        field_value = ""
-
-    # Loop through each company in the category
-    for company in companies:
-        # Add company information to the field value
-        field_value += f"✅ **{company['name']}** ({company['timesEncountered']})\n"
-
-    # Add the field to the embed
-    embed.add_field(name=field_name, value=field_value, inline=False)
-
-    return embed
-
-# Generate the Embed
+    company_stats_result = await gql_client.execute_async(company_query, variable_values={"titleSlug": title_slug})
+    company_data = await extract_company_data(company_stats_result)
+    return await create_embed(json.loads(company_data))
 
 
-def get_multifield_embed(embedDict, title="Daily LC", description="This is the Daily LC Question"):
-    embed = discord.Embed(title=title, description=description)
-    for key, value in embedDict.items():
-        embed.add_field(name=key, value=value, inline=True)
+async def get_similar_questions_embed(gql_client, similar_query, title_slug):
+    """Fetches similar questions and creates an embed with their details."""
 
-    return embed
+    async def extract_similar_questions(result):
+        """Extracts similar question data from the GraphQL result."""
+        return result["question"]["similarQuestionList"]
 
-# Get the Data
+    async def create_embed(questions):
+        """Creates an embed with fields for each question."""
+        embed = discord.Embed(title="Similar Questions")
+        for question in questions:
+            title = question["title"]
+            link = f"https://leetcode.com/problems/{question['titleSlug']}"
+            is_paid_only = question["isPaidOnly"]
+            title_text = title + (" (Paid Only)" if is_paid_only else "")
+            embed.add_field(name=title_text, value=link, inline=False)
+        return embed
+
+    similar_result = await gql_client.execute_async(similar_query, variable_values={"titleSlug": title_slug})
+    similar_questions = await extract_similar_questions(similar_result)
+    return await create_embed(similar_questions)
 
 
-async def getDailyLC(dailyQuery, companyQuery, similarQuery):
+async def get_question_embed(gql_client, query_to_run, result_key, query_type, description, title_slug="", title=""):
+    variables = {}
+    """Fetches LeetCode question data and creates a Discord embed."""
+    async def create_embed(question_data, embed_description, title):
+        """Creates a Discord embed with fields from question data."""
+        question_title = question_data["title"]
+        if "Daily" in title:
+            embed_title = f"{title} - {question_title}"
+        else:
+            embed_title = f"{question_title}"
+        embed = discord.Embed(
+            title=embed_title,
+            description=description
+        )
+        for field_name, value in question_data.items():
+            embed.add_field(name=field_name.title(), value=value, inline=True)
+        return embed
 
-    # Send the requests to get data
-    daily_result = await gql_client.execute_async(dailyQuery)
-    data = daily_result["activeDailyCodingChallengeQuestion"]
-    company_stats_result = await gql_client.execute_async(companyQuery, variable_values={"titleSlug": data["question"]["titleSlug"]})
-    company_data = company_stats_result["question"]["companyTagStats"]
-    similar_result = await gql_client.execute_async(similarQuery, variable_values={"titleSlug": data["question"]["titleSlug"]})
-    similar_data = similar_result["question"]["similarQuestionList"]
+    async def extract_question_data(result, result_key, query_type, title_slug):
+        """Extracts relevant question data from the GraphQL result."""
+        if "daily" in query_type:
+            return {
+                "title": data["question"]["title"],
+                "date": data["date"],
+                "link": f"https://leetcode.com{data['link']}",
+                "paid_only": data["question"]["paidOnly"],
+                "topics": ",".join(item["name"] for item in data["question"]["topicTags"]),
+                "difficulty": f"||{data['question']['difficulty']}||"
+            }
+        elif "question" in query_type:
+            return {
+                "title": data["title"],
+                "date": date.today().strftime("%Y-%m-%d"),
+                "link": f"https://leetcode.com/{data['titleSlug']}",
+                "paid_only": data["paidOnly"],
+                "topics": ",".join(item["name"] for item in data["topicTags"]),
+                "difficulty": f"||{data['difficulty']}||"
+            }
 
-    diff = data["question"]["difficulty"]
-    mainEmbed = get_multifield_embed(embedDict={
-        "title": data["question"]["title"],
-        "date": data["date"],
-        "link": "https://leetcode.com" + data["link"],
-        "paidOnly": data["question"]["paidOnly"],
-        "topics": ",".join([item["name"] for item in data["question"]["topicTags"]]),
-        "difficulty": f"||{diff}||"
-    },
-        title="Daily LC",
-        description="This is the daily leetcode question, Good Luck!"
-    )
-    similarEmbed = create_similar_embed(similar_data)
-    companyEmbed = create_company_embed(company_data)
-    return [mainEmbed, companyEmbed, similarEmbed]
+    if "question" in query_type:
+        variables = {
+            "titleSlug": title_slug
+        }
+    result = await gql_client.execute_async(query_to_run, variable_values=variables)
+    data = result[result_key]
+    question_data = await extract_question_data(result=data, result_key=result_key, query_type=query_type, title_slug=title_slug)
+    if "daily" in query_type:
+        return await create_embed(question_data, embed_description=description, title=title),  data["question"]["titleSlug"]
+    return await create_embed(question_data, embed_description=description, title=title)
 
 
 @client.event
@@ -161,15 +192,31 @@ async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
 
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+@client.command(name="daily")
+async def daily(ctx):
+    main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
+    embeds = [
+        main_embed,
+        await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
+        await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
 
-    if message.content.startswith(prefix + "daily"):
-        await message.channel.send(embeds=await getDailyLC(dailyQuery=daily_query, companyQuery=company_query, similarQuery=similar_query))
+    await ctx.send(embeds=embeds)
 
-    if message.content.startswith(prefix + "ping"):
-        await message.send(f'Pong! In {round(client.latency * 1000)}ms')
+
+@client.command(name="question")
+async def question(ctx, arg):
+    main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
+    embeds = [
+        main_embed,
+        await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
+        await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
+
+    await ctx.send(embeds=embeds)
+
+
+@client.command(name="ping")
+async def ping(ctx):
+    await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
+
 
 client.run(os.environ.get('DISCORD_BOT_TOKEN'))
