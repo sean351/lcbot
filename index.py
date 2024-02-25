@@ -31,10 +31,6 @@ def configure_client():
 
 client, gql_client = configure_client()
 
-
-# DEBUG SENTRY
-division_by_zero = 1 / 0
-
 # Define a function to log events
 async def log_event(event):
     # Extract relevant information from the event
