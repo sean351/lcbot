@@ -89,7 +89,6 @@ query SimilarQuestions($titleSlug: String!) {
 """
 )
 
-
 async def get_company_stats_embed(gql_client, company_query, title_slug):
     """Fetches company stats and creates an embed with company encounter summaries."""
 
@@ -106,11 +105,14 @@ async def get_company_stats_embed(gql_client, company_query, title_slug):
                 for company in companies
             )
             embed.add_field(
-                name=f"Category {category}", value=field_value, inline=False)
+                name=f"Category {category}", value=field_value, inline=False
+            )
         return embed
 
     company_stats_result = await gql_client.execute_async(company_query, variable_values={"titleSlug": title_slug})
     company_data = await extract_company_data(company_stats_result)
+    if not company_data:
+        return discord.Embed(title="No Company Data Available")
     return await create_embed(json.loads(company_data))
 
 
@@ -134,6 +136,8 @@ async def get_similar_questions_embed(gql_client, similar_query, title_slug):
 
     similar_result = await gql_client.execute_async(similar_query, variable_values={"titleSlug": title_slug})
     similar_questions = await extract_similar_questions(similar_result)
+    if not similar_questions:
+        return discord.Embed(title="No Similar Questions Available")
     return await create_embed(similar_questions)
 
 
@@ -192,7 +196,7 @@ async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
 
 
-@client.command(name="daily")
+@client.command(name="daily", description="Get Info about Daily LC Question")
 async def daily(ctx):
     main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
     embeds = [
@@ -205,9 +209,7 @@ async def daily(ctx):
     await thread.send(embeds=embeds)
 
 
-
-
-@client.command(name="question")
+@client.command(name="question", description="Get Info about a LC Question")
 async def question(ctx, arg):
     main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
     embeds = [
@@ -219,9 +221,19 @@ async def question(ctx, arg):
     await thread.send(embeds=embeds)
 
 
-@client.command(name="ping")
+@client.command(name="ping", description="Ping Command")
 async def ping(ctx):
     await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
 
+# Events
+@client.event
+async def on_member_join(member):
+    await member.send(
+        f'Welcome to the server, {member.mention}! Enjoy your stay here.'
+    )
+
+@client.event
+async def on_ready():
+    print(f"LC bot is ready.")  # print a message
 
 client.run(os.environ.get('DISCORD_BOT_TOKEN'))
