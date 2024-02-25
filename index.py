@@ -244,6 +244,6 @@ async def on_event(event):
 
 @client.event
 async def on_ready():
-    print(f"LC bot is ready.")  # print a message
+    logging.log(logging.INFO, f"LC bot is ready.")
 
 client.run(os.environ.get('DISCORD_BOT_TOKEN'))
