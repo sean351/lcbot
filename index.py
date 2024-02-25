@@ -9,8 +9,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 import json
 import sentry_sdk
 
-
-
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     dotenv.load_dotenv()
@@ -31,9 +29,11 @@ def configure_client():
 )
     return client, gql_client
 
-
 client, gql_client = configure_client()
 
+
+# DEBUG SENTRY
+division_by_zero = 1 / 0
 
 # Define a function to log events
 async def log_event(event):
