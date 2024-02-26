@@ -229,8 +229,7 @@ async def find_message(target_channel, ctx, search_string):
 
     await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
 
-async def create_thread(client, ctx, thread_name, channel_id, embeds):
-    target_channel = client.get_channel(int(channel_id))
+async def create_thread(target_channel, ctx, thread_name, embeds):
     if target_channel is None:
         await ctx.send("Target channel not found!")
         return
@@ -276,9 +275,8 @@ async def daily(ctx):
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
+    target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
     thread = await create_thread(client=client, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
-    # Send the jump url to the thread
-    await ctx.send(f"Daily LC Thread For '{today}' created in channel '{target_channel.mention}.\nJoin here: {thread.jump_url}'")
 
 
 @client.command(name="question", description="Get Info about a LC Question")
@@ -288,7 +286,8 @@ async def question(ctx, arg):
         main_embed,
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
-    thread = await create_thread(client=client, ctx=ctx, thread_name=f"'{arg}' Thread", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"'{arg}' Thread", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
