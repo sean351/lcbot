@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import datetime
 from datetime import date
 import os
 import dotenv
@@ -10,29 +11,34 @@ import json
 import pytz
 import sentry_sdk
 
+
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     dotenv.load_dotenv()
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
-    client = commands.AutoShardedBot(intents=intents, command_prefix=os.environ.get("PREFIX"))
+    client = commands.AutoShardedBot(
+        intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
         headers={"cookie": os.environ.get("LC_COOKIE")}
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
     sentry_sdk.init(
-    dsn=os.environ.get("SENTRY_DSN"),
+        dsn=os.environ.get("SENTRY_DSN"),
 
-    # Enable performance monitoring
-    enable_tracing=True,
-)
+        # Enable performance monitoring
+        enable_tracing=True,
+    )
     return client, gql_client
+
 
 client, gql_client = configure_client()
 
 # Define a function to log events
+
+
 async def log_event(event):
     # Extract relevant information from the event
     # (e.g., event type, timestamp, user, message, etc.)
@@ -106,6 +112,7 @@ query SimilarQuestions($titleSlug: String!) {
 }
 """
 )
+
 
 async def get_company_stats_embed(gql_client, company_query, title_slug):
     """Fetches company stats and creates an embed with company encounter summaries."""
@@ -229,6 +236,7 @@ async def find_message(target_channel, ctx, search_string):
 
     await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
 
+
 async def create_thread(target_channel, ctx, thread_name, embeds):
     if target_channel is None:
         await ctx.send("Target channel not found!")
@@ -244,10 +252,11 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
         if thread.name == thread_name:
             # Check thread creation time
             thread_creation_time = thread.created_at.astimezone(pytz.utc)
-            current_time_utc = pytz.utc.localize(datetime.datetime.now())
+            current_time_utc = pytz.utc.localize(datetime.now())
 
             # Calculate time difference in hours
-            time_diff = (current_time_utc - thread_creation_time).total_seconds() / 3600
+            time_diff = (current_time_utc -
+                         thread_creation_time).total_seconds() / 3600
 
             if time_diff < 24:
                 await ctx.send(f"Thread '{thread_name}' already exists within the past 24 hours.")
@@ -289,14 +298,18 @@ async def question(ctx, arg):
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
     thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"'{arg}' Thread", embeds=embeds)
 
+
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
     await ctx.send(f"Pong! In '{round(client.latency * 1000)}'ms")
 
 # Events
+
+
 @client.event
 async def on_event(event):
     await log_event(event)
+
 
 @client.event
 async def on_ready():
