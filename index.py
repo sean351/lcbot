@@ -17,7 +17,7 @@ def configure_client():
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
-    client = discord.AutoShardedBot(
+    client = discord.Bot(
         intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
