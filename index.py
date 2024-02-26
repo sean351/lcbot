@@ -235,7 +235,7 @@ async def find_message(target_channel: discord.TextChannel, ctx: discord.ext.com
         await ctx.send(f"Found message in {target_channel.mention}:\n{matching_messages[0].jump_url}")
         return
     else:
-        await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
+        await ctx.send(f"No message found containing {search_string} in the past 100 messages.")
 
 
 async def get_thread_link(client: discord.Client, guild_id: int, thread_id: int) -> str:
@@ -272,7 +272,7 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
                          thread_creation_time).total_seconds() / 3600
 
             if time_diff < 24:
-                await ctx.send(f"Thread '{thread_name}' already exists within the past 24 hours.")
+                await ctx.send(f"Thread {thread_name} already exists within the past 24 hours.")
                 thread_link = await get_thread_link(client=client, guild_id=int(os.environ.get("GUILD_ID")), thread_id=thread.id)
                 await ctx.send(thread_link)
                 return
@@ -280,7 +280,7 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
     try:
         thread = await target_channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread)
         await thread.send(embeds=embeds)
-        await ctx.send(f"Thread '{thread_name}' created in channel {target_channel.mention}")
+        await ctx.send(f"Thread {thread_name} created in channel {target_channel.mention}")
     except discord.HTTPException as e:
         await ctx.send(f"Failed to create thread: {e}")
 
@@ -299,7 +299,7 @@ async def daily(ctx):
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
 
 
 @client.command(name="question", description="Get Info about a LC Question")
@@ -310,12 +310,12 @@ async def question(ctx, arg):
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"'{arg}' Thread", embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
 
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
-    await ctx.send(f"Pong! In '{round(client.latency * 1000)}'ms")
+    await ctx.send(f"Pong! In {round(client.latency * 1000)}ms")
 
 # Events
 
