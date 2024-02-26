@@ -216,25 +216,38 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
     return await create_embed(question_data, embed_description=description, title=title)
 
 
-async def find_message(target_channel, ctx, search_string):
+async def find_message(target_channel: discord.TextChannel, ctx: discord.ext.commands.Context, search_string: str) -> None:
     if target_channel is None:
         await ctx.send("Target channel not found!")
         return
 
     # Fetch recent messages (adjust limit as needed)
     try:
-        messages = await target_channel.history(limit=100).flatten()
+        messages = target_channel.history(limit=100)
     except discord.HTTPException as e:
-        await ctx.send(f"Failed to fetch messages: {e}")
+        await ctx.send(f"Failed to fetch messages: {e.__class__.__name__} - {e}")
         return
 
     # Search for matching message
-    for message in messages:
-        if search_string.lower() in message.content.lower():
-            await ctx.send(f"Found message in {target_channel.mention}:\n{message.jump_url}")
-            return
+    matching_messages = [message async for message in messages if search_string.lower() in message.content.lower()]
 
-    await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
+    if matching_messages:
+        await ctx.send(f"Found message in {target_channel.mention}:\n{matching_messages[0].jump_url}")
+        return
+    else:
+        await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
+
+
+async def get_thread_link(client: discord.Client, guild_id: int, thread_id: int) -> str:
+    try:
+        thread = client.get_guild(guild_id).get_thread(thread_id)
+        if thread:
+            return f"{thread.jump_url}"
+        else:
+            return None
+    except discord.HTTPException as e:
+        print(f"Error retrieving thread: {e}")
+        return None
 
 
 async def create_thread(target_channel, ctx, thread_name, embeds):
@@ -260,7 +273,8 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
 
             if time_diff < 24:
                 await ctx.send(f"Thread '{thread_name}' already exists within the past 24 hours.")
-                await find_message(target_channel=target_channel, ctx=ctx, search_string="Thread '{thread_name}'")
+                thread_link = await get_thread_link(client=client, guild_id=int(os.environ.get("GUILD_ID")), thread_id=thread.id)
+                await ctx.send(thread_link)
                 return
 
     try:
