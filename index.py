@@ -276,7 +276,7 @@ async def daily(ctx):
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(client=client, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
 
 
 @client.command(name="question", description="Get Info about a LC Question")
