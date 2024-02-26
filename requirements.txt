@@ -1,5 +1,4 @@
 requests
-discord.py
 python-dotenv
 py-cord
 pytz

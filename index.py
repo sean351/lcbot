@@ -320,7 +320,7 @@ async def add(ctx, first: discord.Option(int), second: discord.Option(int)):
     await ctx.respond(f"The sum of {first} and {second} is {sum}.")
 
 
-@bot.slash_command(name="animal")
+@client.slash_command(name="animal")
 async def animal_command(
     ctx: discord.ApplicationContext,
     animal_type: discord.Option(str, choices=['Marine', 'Land']),
