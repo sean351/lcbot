@@ -251,7 +251,7 @@ async def create_thread(client, ctx, thread_name, channel_id, embeds):
 
             if time_diff < 24:
                 await ctx.send(f"Thread '{thread_name}' already exists within the past 24 hours.")
-                await find_message(target_channel=target_channel, ctx=ctx, f"Thread '{thread_name}'")
+                await find_message(target_channel=target_channel, ctx=ctx, search_string="Thread '{thread_name}'")
                 return
 
     try:
@@ -275,9 +275,9 @@ async def daily(ctx):
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
-    thread = await create_thread(client=client, ctx=ctx, thread_name=f"Daily LC Thread For {today}", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    thread = await create_thread(client=client, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
     # Send the jump url to the thread
-    await ctx.send(f"Daily LC Thread For {today} created in channel {target_channel.mention}.\nJoin here: {thread.jump_url}")
+    await ctx.send(f"Daily LC Thread For '{today}' created in channel '{target_channel.mention}.\nJoin here: {thread.jump_url}'")
 
 
 @client.command(name="question", description="Get Info about a LC Question")
@@ -287,11 +287,11 @@ async def question(ctx, arg):
         main_embed,
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
-    thread = await create_thread(client=client, ctx=ctx, thread_name=f"{arg} Thread", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    thread = await create_thread(client=client, ctx=ctx, thread_name=f"'{arg}' Thread", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
-    await ctx.send(f'Pong! In {round(client.latency * 1000)}ms')
+    await ctx.send(f"Pong! In '{round(client.latency * 1000)}'ms")
 
 # Events
 @client.event
