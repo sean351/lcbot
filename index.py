@@ -276,7 +276,7 @@ async def daily(ctx):
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For '{today}'", embeds=embeds)
 
 
 @client.command(name="question", description="Get Info about a LC Question")
@@ -287,7 +287,7 @@ async def question(ctx, arg):
         await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"'{arg}' Thread", channel_id=os.environ.get("LC_CHANNEL_ID"), embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"'{arg}' Thread", embeds=embeds)
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
