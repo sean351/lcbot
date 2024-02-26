@@ -2,6 +2,5 @@ requests
 discord.py
 python-dotenv
 py-cord
-pytz
 sentry_sdk
 gql[all]

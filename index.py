@@ -1,14 +1,13 @@
 import discord
 from discord.ext import commands
 import datetime
-from datetime import date
+from datetime import date, timezone, timedelta
+from gql import Client, gql
+from gql.transport.aiohttp import AIOHTTPTransport
 import os
 import dotenv
 import logging
-from gql import Client, gql
-from gql.transport.aiohttp import AIOHTTPTransport
 import json
-import pytz
 import sentry_sdk
 
 
@@ -264,14 +263,13 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
     for thread in target_channel.threads:
         if thread.name == thread_name:
             # Check thread creation time
-            thread_creation_time = thread.created_at.astimezone(pytz.utc)
-            current_time_utc = pytz.utc.localize(datetime.datetime.now())
+            thread_creation_time = thread.created_at.astimezone(timezone.utc)
+            utc_now = datetime.datetime.now(timezone.utc)
 
             # Calculate time difference in hours
-            time_diff = (current_time_utc -
-                         thread_creation_time).total_seconds() / 3600
+            threshold_time = utc_now - timedelta(hours=24)
 
-            if time_diff < 24:
+            if thread_creation_time >= threshold_time:
                 await ctx.send(f"Thread {thread_name} already exists within the past 24 hours.")
                 thread_link = await get_thread_link(client=client, guild_id=int(os.environ.get("GUILD_ID")), thread_id=thread.id)
                 await ctx.send(thread_link)
