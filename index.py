@@ -252,7 +252,7 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
         if thread.name == thread_name:
             # Check thread creation time
             thread_creation_time = thread.created_at.astimezone(pytz.utc)
-            current_time_utc = pytz.utc.localize(datetime.now())
+            current_time_utc = pytz.utc.localize(datetime.datetime.now())
 
             # Calculate time difference in hours
             time_diff = (current_time_utc -
