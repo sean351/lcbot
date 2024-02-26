@@ -113,6 +113,17 @@ query SimilarQuestions($titleSlug: String!) {
 )
 
 
+async def get_animal_types(ctx: discord.AutocompleteContext):
+    """
+    Here we will check if 'ctx.options['animal_type']' is a marine or land animal and return respective option choices
+    """
+    animal_type = ctx.options['animal_type']
+    if animal_type == 'Marine':
+        return ['Whale', 'Shark', 'Fish', 'Octopus', 'Turtle']
+    else:  # is land animal
+        return ['Snake', 'Wolf', 'Lizard', 'Lion', 'Bird']
+
+
 async def get_company_stats_embed(gql_client, company_query, title_slug):
     """Fetches company stats and creates an embed with company encounter summaries."""
 
@@ -222,7 +233,7 @@ async def find_message(target_channel: discord.TextChannel, ctx, search_string: 
 
     # Fetch recent messages (adjust limit as needed)
     try:
-        messages = target_channel.history(limit=100)
+        messages = target_channel.history(limit=500)
     except discord.HTTPException as e:
         await ctx.respond(f"Failed to fetch messages: {e.__class__.__name__} - {e}")
         return
@@ -301,8 +312,26 @@ async def daily(ctx):
     thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
 
 
-@client.slash_command(name="question", description="Get Info about a LC Question")
-async def question(ctx, arg):
+@client.slash_command(name="add", description="add two numbers")
+# pycord will figure out the types for you
+async def add(ctx, first: discord.Option(int), second: discord.Option(int)):
+    # you can use them as they were actual integers
+    sum = first + second
+    await ctx.respond(f"The sum of {first} and {second} is {sum}.")
+
+
+@bot.slash_command(name="animal")
+async def animal_command(
+    ctx: discord.ApplicationContext,
+    animal_type: discord.Option(str, choices=['Marine', 'Land']),
+    animal: discord.Option(
+        str, autocomplete=discord.utils.basic_autocomplete(get_animal_types))
+):
+    await ctx.respond(f'You picked an animal type of `{animal_type}` that led you to pick `{animal}`!')
+
+
+@client.slash_command(name="question", description="Get Info about a LC Question (e.g. two-sum or reverse-integer)")
+async def question(ctx, question_name: str):
     main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
     embeds = [
         main_embed,
