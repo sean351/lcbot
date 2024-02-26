@@ -1,5 +1,4 @@
 import discord
-from discord.ext import commands
 import datetime
 from datetime import date
 import os
@@ -18,7 +17,7 @@ def configure_client():
     intents = discord.Intents.default()
     intents.message_content = True
     intents.members = True
-    client = commands.AutoShardedBot(
+    client = discord.AutoShardedBot(
         intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
@@ -216,26 +215,26 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
     return await create_embed(question_data, embed_description=description, title=title)
 
 
-async def find_message(target_channel: discord.TextChannel, ctx: discord.ext.commands.Context, search_string: str) -> None:
+async def find_message(target_channel: discord.TextChannel, ctx, search_string: str) -> None:
     if target_channel is None:
-        await ctx.send("Target channel not found!")
+        await ctx.respond("Target channel not found!")
         return
 
     # Fetch recent messages (adjust limit as needed)
     try:
         messages = target_channel.history(limit=100)
     except discord.HTTPException as e:
-        await ctx.send(f"Failed to fetch messages: {e.__class__.__name__} - {e}")
+        await ctx.respond(f"Failed to fetch messages: {e.__class__.__name__} - {e}")
         return
 
     # Search for matching message
     matching_messages = [message async for message in messages if search_string.lower() in message.content.lower()]
 
     if matching_messages:
-        await ctx.send(f"Found message in {target_channel.mention}:\n{matching_messages[0].jump_url}")
+        await ctx.respond(f"Found message in {target_channel.mention}:\n{matching_messages[0].jump_url}")
         return
     else:
-        await ctx.send(f"No message found containing {search_string} in the past 100 messages.")
+        await ctx.respond(f"No message found containing {search_string} in the past 100 messages.")
 
 
 async def get_thread_link(client: discord.Client, guild_id: int, thread_id: int) -> str:
@@ -252,12 +251,12 @@ async def get_thread_link(client: discord.Client, guild_id: int, thread_id: int)
 
 async def create_thread(target_channel, ctx, thread_name, embeds):
     if target_channel is None:
-        await ctx.send("Target channel not found!")
+        await ctx.respond("Target channel not found!")
         return
 
     # Check if user can create threads in target channel
     if not target_channel.permissions_for(ctx.author).create_public_threads:
-        await ctx.send("You don't have permissions to create threads in this channel.")
+        await ctx.respond("You don't have permissions to create threads in this channel.")
         return
 
     # Check if thread already exists (using list threads method)
@@ -272,17 +271,17 @@ async def create_thread(target_channel, ctx, thread_name, embeds):
                          thread_creation_time).total_seconds() / 3600
 
             if time_diff < 24:
-                await ctx.send(f"Thread {thread_name} already exists within the past 24 hours.")
+                await ctx.respond(f"Thread {thread_name} already exists within the past 24 hours.")
                 thread_link = await get_thread_link(client=client, guild_id=int(os.environ.get("GUILD_ID")), thread_id=thread.id)
-                await ctx.send(thread_link)
+                await ctx.respond(thread_link)
                 return
 
     try:
         thread = await target_channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread)
         await thread.send(embeds=embeds)
-        await ctx.send(f"Thread {thread_name} created in channel {target_channel.mention}")
+        await ctx.reespond(f"Thread {thread_name} created in channel {target_channel.mention}")
     except discord.HTTPException as e:
-        await ctx.send(f"Failed to create thread: {e}")
+        await ctx.respond(f"Failed to create thread: {e}")
 
 
 @client.event
@@ -290,7 +289,7 @@ async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
 
 
-@client.command(name="daily", description="Get Info about Daily LC Question")
+@client.slash_command(name="daily", description="Get Info about Daily LC Question")
 async def daily(ctx):
     main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
     embeds = [
@@ -302,7 +301,7 @@ async def daily(ctx):
     thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
 
 
-@client.command(name="question", description="Get Info about a LC Question")
+@client.slash_command(name="question", description="Get Info about a LC Question")
 async def question(ctx, arg):
     main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
     embeds = [
@@ -311,11 +310,12 @@ async def question(ctx, arg):
         await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
     thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
+    await ctx.respond("Created Thread")
 
 
-@client.command(name="ping", description="Ping Command")
+@client.slash_command(name="ping", description="Ping Command")
 async def ping(ctx):
-    await ctx.send(f"Pong! In {round(client.latency * 1000)}ms")
+    await ctx.respond(f"Pong! In {round(client.latency * 1000)}ms")
 
 # Events
 
