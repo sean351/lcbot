@@ -7,6 +7,7 @@ import logging
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 import json
+import pytz
 import sentry_sdk
 
 def configure_client():
@@ -243,7 +244,7 @@ async def create_thread(client, ctx, thread_name, channel_id, embeds):
     for thread in target_channel.threads:
         if thread.name == thread_name:
             # Check thread creation time
-            thread_creation_time = thread.created_at.astimezone(utc_timezone)
+            thread_creation_time = thread.created_at.astimezone(pytz.utc)
             current_time_utc = pytz.utc.localize(datetime.datetime.now())
 
             # Calculate time difference in hours
