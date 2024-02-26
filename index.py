@@ -207,6 +207,27 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
         return await create_embed(question_data, embed_description=description, title=title),  data["question"]["titleSlug"]
     return await create_embed(question_data, embed_description=description, title=title)
 
+
+async def find_message(target_channel, ctx, search_string):
+    if target_channel is None:
+        await ctx.send("Target channel not found!")
+        return
+
+    # Fetch recent messages (adjust limit as needed)
+    try:
+        messages = await target_channel.history(limit=100).flatten()
+    except discord.HTTPException as e:
+        await ctx.send(f"Failed to fetch messages: {e}")
+        return
+
+    # Search for matching message
+    for message in messages:
+        if search_string.lower() in message.content.lower():
+            await ctx.send(f"Found message in {target_channel.mention}:\n{message.jump_url}")
+            return
+
+    await ctx.send(f"No message found containing '{search_string}' in the past 100 messages.")
+
 async def create_thread(client, ctx, thread_name, channel_id, embeds):
     target_channel = client.get_channel(int(channel_id))
     if target_channel is None:
@@ -230,6 +251,7 @@ async def create_thread(client, ctx, thread_name, channel_id, embeds):
 
             if time_diff < 24:
                 await ctx.send(f"Thread '{thread_name}' already exists within the past 24 hours.")
+                await find_message(target_channel=target_channel, ctx=ctx, f"Thread '{thread_name}'")
                 return
 
     try:
