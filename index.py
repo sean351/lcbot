@@ -191,7 +191,7 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
                 "date": data["date"],
                 "link": f"https://leetcode.com{data['link']}",
                 "paid_only": data["question"]["paidOnly"],
-                "topics": ",".join(item["name"] for item in data["question"]["topicTags"]),
+                "topics": f"||{', '.join(item['name'] for item in data.get('topicTags', []))}||",
                 "difficulty": f"||{data['question']['difficulty']}||"
             }
         elif "question" in query_type:
@@ -199,7 +199,7 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
                 "title": data["title"],
                 "link": f"https://leetcode.com/{data['titleSlug']}",
                 "paid_only": data["paidOnly"],
-                "topics": ",".join(item["name"] for item in data["topicTags"]),
+                "topics": f"||{', '.join(item['name'] for item in data.get('topicTags', []))}||",
                 "difficulty": f"||{data['difficulty']}||"
             }
 
