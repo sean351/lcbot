@@ -360,7 +360,7 @@ async def daily(ctx):
             int(os.environ.get("LC_CHANNEL_ID")))
         thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
     except Exception as e:
-        await ctx.send(f"Error: {e.args[0]}")
+        print(f"Error: {e.args[0]}")
         return
 
 
@@ -377,7 +377,7 @@ async def question(ctx, arg):
             int(os.environ.get("LC_CHANNEL_ID")))
         thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
     except Exception as e:
-        await ctx.send(f"Error: {e.args[0]}")
+        print(f"Error: {e.args[0]}")
         return
 
 @daily.error
