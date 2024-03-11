@@ -337,7 +337,7 @@ async def execute(ctx, command):
             print("Error:", response["stderr"])
         else:
             print("Standard output:", response["std"])
-            ctx.send(response["std"])
+            await ctx.send(response["std"])
     except Exception as e:
         await ctx.send(f"Error: {e.args[0]}")
         return
