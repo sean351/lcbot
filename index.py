@@ -114,43 +114,20 @@ query SimilarQuestions($titleSlug: String!) {
 """
 )
 
-
-def execute_command(command):
-    """Executes a terminal command securely and returns the output.
-
-    Args:
-        command (str): The terminal command to execute.
-
-    Returns:
-        dict: A dictionary containing the following keys:
-            - err (bool): True if an error occurred, False otherwise.
-            - std (str): The standard output of the command (trimmed).
-            - stderr (str): The standard error of the command (trimmed),
-                             available only if an error occurred.
-
-    Raises:
-        RuntimeError: If the command execution times out or encounters
-                      an unexpected error.
-    """
+def execute_command(command_tuple, check=True):
     try:
-        # Split the command into a safe list of arguments using shlex.split()
-        args = shlex.split(command)
-
-        # Execute the command with a timeout of 30 seconds
         result = subprocess.run(
-            args, timeout=30, capture_output=True, text=True)
+            command_tuple,  # Directly pass the tuple as arguments
+            check=check,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
 
-        if result.returncode == 0:
-            # Command successful, return trimmed stdout
-            return {"err": False, "std": result.stdout.strip()}
-        else:
-            # Command failed, return trimmed stderr
-            return {"err": True, "std": result.stderr.strip(), "stderr": result.stderr.strip()}
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr
+        return None
 
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("Command timed out after 30 seconds")
-    except Exception as e:
-        raise RuntimeError(f"Unexpected error: {e}")
 
 
 async def get_company_stats_embed(gql_client, company_query, title_slug):
@@ -330,7 +307,7 @@ async def on_ready():
 
 @client.command(name="execute", description="Execute a console command")
 @commands.is_owner()
-async def execute(ctx, command):
+async def execute(ctx, *command):
     try:
         response = execute_command(command)
         if response["err"]:
@@ -365,7 +342,6 @@ async def daily(ctx):
 
 
 @client.command(name="question", description="Get Info about a LC Question")
-@commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def question(ctx, arg):
     try:
         main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
@@ -389,20 +365,9 @@ async def question_error(ctx, error):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
-@question.error
-async def question_error(ctx, error):
-    if isinstance(error, commands.CommandOnCooldown):
-        # User is on cooldown, send informative message
-        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
-    if isinstance(error, commands.CommandInvokeError):
-        # User is on cooldown, send informative message
-        await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
-
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
     await ctx.send(f"Pong! In {round(client.latency * 1000)}ms")
-
-# Events
 
 
 @client.event
