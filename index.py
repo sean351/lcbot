@@ -21,7 +21,7 @@ def configure_client():
         intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
-        headers={"cookie": os.environ.get("LC_COOKIE")}
+        # headers={"cookie": os.environ.get("LC_COOKIE")}
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
     sentry_sdk.init(
@@ -115,7 +115,6 @@ query SimilarQuestions($titleSlug: String!) {
 
 async def get_company_stats_embed(gql_client, company_query, title_slug):
     """Fetches company stats and creates an embed with company encounter summaries."""
-
     async def extract_company_data(result):
         """Extracts company data from the GraphQL result."""
         return result["question"]["companyTagStats"]
@@ -291,13 +290,13 @@ async def on_ready():
 @client.command(name="daily", description="Get Info about Daily LC Question")
 async def daily(ctx):
     main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
-    embeds = [
-        main_embed,
-        await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
-        await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
+    # embeds = [
+    #     main_embed,
+    #     await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
+    #     await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
     today = date.today().strftime("%Y-%m-%d")
     target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
+    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=[main_embed])
 
 
 @client.command(name="question", description="Get Info about a LC Question")
