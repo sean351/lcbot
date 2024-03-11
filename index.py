@@ -22,6 +22,7 @@ def configure_client():
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
         headers={"cookie": os.environ.get("LC_COOKIE")}
+        ssl=True
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
     sentry_sdk.init(
@@ -206,6 +207,7 @@ async def get_question_embed(gql_client, query_to_run, result_key, query_type, d
         variables = {
             "titleSlug": title_slug
         }
+
     result = await gql_client.execute_async(query_to_run, variable_values=variables)
     data = result[result_key]
     question_data = await extract_question_data(result=data, result_key=result_key, query_type=query_type, title_slug=title_slug)
@@ -289,25 +291,32 @@ async def on_ready():
 
 @client.command(name="daily", description="Get Info about Daily LC Question")
 async def daily(ctx):
-    main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
-    embeds = [
-        main_embed,
-        await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
-        await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
-    today = date.today().strftime("%Y-%m-%d")
-    target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
-
+    try :
+            main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
+            embeds = [
+                main_embed,
+                await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
+                await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
+            today = date.today().strftime("%Y-%m-%d")
+            target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
+            thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
+    except Exception as e:
+        await ctx.send(f"Error: {e.args[0]}")
+        return
 
 @client.command(name="question", description="Get Info about a LC Question")
 async def question(ctx, arg):
-    main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
-    embeds = [
-        main_embed,
-        await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
-        await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
-    target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-    thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
+    try:
+            main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
+            embeds = [
+                main_embed,
+                await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
+                await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
+            target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
+            thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
+    except Exception as e:
+        await ctx.send(f"Error: {e.args[0]}")
+        return
 
 
 @client.command(name="ping", description="Ping Command")
