@@ -332,7 +332,7 @@ async def on_ready():
 @commands.is_owner()
 async def execute(ctx, command):
     try:
-        response = execute_command(ctx, command)
+        response = execute_command(command)
         if response["err"]:
             print("Error:", response["stderr"])
         else:
@@ -346,6 +346,9 @@ async def execute(ctx, command):
 @client.command(name="daily", description="Get Info about Daily LC Question")
 @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def daily(ctx):
+    if isinstance(error, commands.CommandOnCooldown):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
     try:
         main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
         embeds = [
@@ -364,6 +367,9 @@ async def daily(ctx):
 @client.command(name="question", description="Get Info about a LC Question")
 @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def question(ctx, arg):
+    if isinstance(error, commands.CommandOnCooldown):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
     try:
         main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
         embeds = [
