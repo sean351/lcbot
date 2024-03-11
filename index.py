@@ -367,9 +367,6 @@ async def daily(ctx):
 @client.command(name="question", description="Get Info about a LC Question")
 @commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def question(ctx, arg):
-    if isinstance(error, commands.CommandOnCooldown):
-        # User is on cooldown, send informative message
-        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
     try:
         main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
         embeds = [
@@ -383,6 +380,23 @@ async def question(ctx, arg):
         await ctx.send(f"Error: {e.args[0]}")
         return
 
+@daily.error
+async def question_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
+    if isinstance(error, commands.CommandError):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
+
+@question.error
+async def question_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
+    if isinstance(error, commands.CommandError):
+        # User is on cooldown, send informative message
+        await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
