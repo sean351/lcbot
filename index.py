@@ -9,7 +9,8 @@ import dotenv
 import logging
 import json
 import sentry_sdk
-
+import subprocess
+import shlex  # For safe command parsing
 
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -112,6 +113,44 @@ query SimilarQuestions($titleSlug: String!) {
 }
 """
 )
+
+
+def execute_command(command):
+    """Executes a terminal command securely and returns the output.
+
+    Args:
+        command (str): The terminal command to execute.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - err (bool): True if an error occurred, False otherwise.
+            - std (str): The standard output of the command (trimmed).
+            - stderr (str): The standard error of the command (trimmed),
+                             available only if an error occurred.
+
+    Raises:
+        RuntimeError: If the command execution times out or encounters
+                      an unexpected error.
+    """
+    try:
+        # Split the command into a safe list of arguments using shlex.split()
+        args = shlex.split(command)
+
+        # Execute the command with a timeout of 30 seconds
+        result = subprocess.run(
+            args, timeout=30, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            # Command successful, return trimmed stdout
+            return {"err": False, "std": result.stdout.strip()}
+        else:
+            # Command failed, return trimmed stderr
+            return {"err": True, "std": result.stderr.strip(), "stderr": result.stderr.strip()}
+
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Command timed out after 30 seconds")
+    except Exception as e:
+        raise RuntimeError(f"Unexpected error: {e}")
 
 
 async def get_company_stats_embed(gql_client, company_query, title_slug):
@@ -289,31 +328,51 @@ async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})")
 
 
-@client.command(name="daily", description="Get Info about Daily LC Question")
-async def daily(ctx):
-    try :
-            main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
-            embeds = [
-                main_embed,
-                await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
-                await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
-            today = date.today().strftime("%Y-%m-%d")
-            target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-            thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
+@client.command(name="execute", description="Execute a console command")
+@commands.is_owner()
+async def execute(ctx, command):
+    try:
+        response = execute_command(ctx, command)
+        if response["err"]:
+            print("Error:", response["stderr"])
+        else:
+            print("Standard output:", response["std"])
+            ctx.send(response["std"])
     except Exception as e:
         await ctx.send(f"Error: {e.args[0]}")
         return
 
+
+@client.command(name="daily", description="Get Info about Daily LC Question")
+@commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
+async def daily(ctx):
+    try:
+        main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
+        embeds = [
+            main_embed,
+            await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=title_slug),
+            await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=title_slug)]
+        today = date.today().strftime("%Y-%m-%d")
+        target_channel = client.get_channel(
+            int(os.environ.get("LC_CHANNEL_ID")))
+        thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"Daily LC Thread For {today}", embeds=embeds)
+    except Exception as e:
+        await ctx.send(f"Error: {e.args[0]}")
+        return
+
+
 @client.command(name="question", description="Get Info about a LC Question")
+@commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def question(ctx, arg):
     try:
-            main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
-            embeds = [
-                main_embed,
-                await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
-                await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
-            target_channel = client.get_channel(int(os.environ.get("LC_CHANNEL_ID")))
-            thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
+        main_embed = await get_question_embed(gql_client=gql_client, query_to_run=question_query, result_key="question", query_type="question", description="LC Question Details", title_slug=arg)
+        embeds = [
+            main_embed,
+            await get_company_stats_embed(gql_client=gql_client, company_query=company_query, title_slug=arg),
+            await get_similar_questions_embed(gql_client=gql_client, similar_query=similar_query, title_slug=arg)]
+        target_channel = client.get_channel(
+            int(os.environ.get("LC_CHANNEL_ID")))
+        thread = await create_thread(target_channel=target_channel, ctx=ctx, thread_name=f"{arg} Thread", embeds=embeds)
     except Exception as e:
         await ctx.send(f"Error: {e.args[0]}")
         return
