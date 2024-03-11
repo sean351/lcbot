@@ -385,7 +385,7 @@ async def question_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
-    if isinstance(error, commands.CommandError):
+    if isinstance(error, commands.CommandInvokeError):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
@@ -394,7 +394,7 @@ async def question_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
-    if isinstance(error, commands.CommandError):
+    if isinstance(error, commands.CommandInvokeError):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
