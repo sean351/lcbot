@@ -21,7 +21,7 @@ def configure_client():
         intents=intents, command_prefix=os.environ.get("PREFIX"))
     transport = AIOHTTPTransport(
         url="https://leetcode.com/graphql",
-        headers={"cookie": os.environ.get("LC_COOKIE")}
+        headers={"cookie": os.environ.get("LC_COOKIE")},
         ssl=True
     )
     gql_client = Client(transport=transport, fetch_schema_from_transport=False)
