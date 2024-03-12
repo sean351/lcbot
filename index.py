@@ -356,6 +356,8 @@ async def question(ctx, arg):
         print(f"Error: {e.args[0]}")
         return
 
+
+@question.error
 @daily.error
 async def question_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
@@ -363,6 +365,7 @@ async def question_error(ctx, error):
         await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
     if isinstance(error, commands.CommandInvokeError):
         # User is on cooldown, send informative message
+        print(f"Error: {error.args[0]}")
         await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
 @client.command(name="ping", description="Ping Command")
