@@ -321,7 +321,6 @@ async def execute(ctx, *command):
 
 
 @client.command(name="daily", description="Get Info about Daily LC Question")
-@commands.cooldown(1, 60 * 60 * 24, commands.BucketType.user)  # 1 hour cooldown for daily command
 async def daily(ctx):
     if isinstance(error, commands.CommandOnCooldown):
         # User is on cooldown, send informative message
