@@ -322,9 +322,6 @@ async def execute(ctx, *command):
 
 @client.command(name="daily", description="Get Info about Daily LC Question")
 async def daily(ctx):
-    if isinstance(error, commands.CommandOnCooldown):
-        # User is on cooldown, send informative message
-        await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
     try:
         main_embed, title_slug = await get_question_embed(gql_client=gql_client, query_to_run=daily_query, result_key="activeDailyCodingChallengeQuestion", query_type="daily", description="This is the daily LeetCode question, Good Luck!", title="Daily LC")
         embeds = [
@@ -362,10 +359,6 @@ async def question_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
-    if isinstance(error, commands.CommandInvokeError):
-        # User is on cooldown, send informative message
-        print(f"Error: {error.args[0]}")
-        await ctx.send(f"Hey {ctx.author.mention}, this command is having some issues, please try again later.")
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
