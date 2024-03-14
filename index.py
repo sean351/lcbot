@@ -1,10 +1,17 @@
+# Discord
 import discord
 from discord.ext import commands
+
+# DateTime
 import datetime
 from datetime import date, timezone, timedelta
 import time
+
+# GQL
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
+
+# Utils
 import os
 import dotenv
 import logging
@@ -12,6 +19,8 @@ import json
 import sentry_sdk
 import subprocess
 import shlex  # For safe command parsing
+
+# Flask Health Check
 from flask import Flask, jsonify
 
 
@@ -396,6 +405,6 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
     client.run(os.environ.get('DISCORD_BOT_TOKEN'))
