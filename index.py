@@ -388,6 +388,6 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
     client.run(os.environ.get('DISCORD_BOT_TOKEN'))
