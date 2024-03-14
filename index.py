@@ -20,10 +20,6 @@ import sentry_sdk
 import subprocess
 import shlex  # For safe command parsing
 
-# Flask Health Check
-from flask import Flask, jsonify
-
-
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     dotenv.load_dotenv()
@@ -49,25 +45,8 @@ def configure_client():
 
 client, gql_client = configure_client()
 
-# Flask app
-app = Flask(__name__)
-
-
-@app.route("/health")
-def health_check():
-    # Implement your health check logic here
-    uptime = round(time.time() - os.path.getmtime(__file__))
-    # ... other health check data (e.g., connected guilds, latency)
-    return jsonify({
-        "uptime": uptime,
-        "guilds": len(client.guilds),
-        "latency": client.latency
-    }
-    )
 
 # Define a function to log events
-
-
 async def log_event(event):
     # Extract relevant information from the event
     # (e.g., event type, timestamp, user, message, etc.)
@@ -406,4 +385,3 @@ async def on_ready():
 
 if __name__ == "__main__":
     client.run(os.environ.get('DISCORD_BOT_TOKEN'))
-    app.run(host="0.0.0.0", port=int(os.environ.get("HEALTH_PORT", 5000)))
