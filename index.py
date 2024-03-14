@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import datetime
 from datetime import date, timezone, timedelta
+import time
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 import os
@@ -12,6 +13,7 @@ import sentry_sdk
 import subprocess
 import shlex  # For safe command parsing
 from flask import Flask, jsonify
+
 
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -34,24 +36,29 @@ def configure_client():
         enable_tracing=True,
     )
     return client, gql_client
+
+
 client, gql_client = configure_client()
 
 # Flask app
 app = Flask(__name__)
 
+
 @app.route("/health")
 def health_check():
-  # Implement your health check logic here
-  uptime = round(time.time() - os.path.getmtime(__file__))
-  # ... other health check data (e.g., connected guilds, latency)
-  return jsonify({
-    "uptime": uptime, 
-    "guilds": len(client.guilds), 
-    "latency": client.latency
+    # Implement your health check logic here
+    uptime = round(time.time() - os.path.getmtime(__file__))
+    # ... other health check data (e.g., connected guilds, latency)
+    return jsonify({
+        "uptime": uptime,
+        "guilds": len(client.guilds),
+        "latency": client.latency
     }
     )
 
 # Define a function to log events
+
+
 async def log_event(event):
     # Extract relevant information from the event
     # (e.g., event type, timestamp, user, message, etc.)
@@ -126,6 +133,7 @@ query SimilarQuestions($titleSlug: String!) {
 """
 )
 
+
 def execute_command(command_tuple, check=True):
     try:
         result = subprocess.run(
@@ -139,7 +147,6 @@ def execute_command(command_tuple, check=True):
     except subprocess.CalledProcessError as e:
         stderr = e.stderr
         return None
-
 
 
 async def get_company_stats_embed(gql_client, company_query, title_slug):
@@ -371,6 +378,7 @@ async def question_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         # User is on cooldown, send informative message
         await ctx.send(f"Hey {ctx.author.mention}, this command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
+
 
 @client.command(name="ping", description="Ping Command")
 async def ping(ctx):
