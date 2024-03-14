@@ -20,11 +20,6 @@ primary_region = 'ewr'
   min_machines_running = 1
   processes = ['app']
 
-[http_service.concurrency]
-  type = "requests"
-  hard_limit = 25
-  soft_limit = 20
-
 [[http_service.checks]]
   grace_period = "10s"
   interval = "30s"
