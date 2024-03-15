@@ -9,22 +9,31 @@ primary_region = 'ewr'
 [build]
   builder = 'paketobuildpacks/builder:base'
 
+[deploy]
+  strategy = 'bluegreen'
+
+[processes]
+  worker = "python index.py"
+
 [env]
   PORT = '8080'
 
-[[services]]
+[http_service]
   internal_port = 8080
-  protocol = "tcp"
+  force_https = true
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 1
+  processes = ['worker']
 
-    [[services.ports]]
-      handlers = ["http"]
-      port = 80
-      force_https = true
-    
-
+[[http_service.checks]]
+  grace_period = "10s"
+  protocol = "http"  # Because you're using Flask
+  port = 5000  # Assuming your Flask app runs on port 5000 (change if different)
+  path = "/health"  # The endpoint defined in your Flask app
+  interval = "15s"  # Check the health every 15 seconds
+  timeout = "2s"  # Timeout after 2 seconds of no response
+  restart_limit = 0  # Restart the service (i.e., your bot) if unhealthy
 
 [[vm]]
   size = 'shared-cpu-1x'

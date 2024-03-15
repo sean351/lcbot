@@ -3,4 +3,5 @@ discord.py
 python-dotenv
 py-cord
 sentry_sdk
+flask
 gql[all]
