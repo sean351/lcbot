@@ -383,5 +383,8 @@ async def on_ready():
     logging.log(logging.INFO, f"LC bot is ready.")
 
 
+async def start_bot():
+    await client.start(os.environ.get("DISCORD_BOT_TOKEN"))
+    
 if __name__ == "__main__":
-    client.run(os.environ.get("DISCORD_TOKEN"))
+    start_bot()
