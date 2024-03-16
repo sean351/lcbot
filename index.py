@@ -384,4 +384,4 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    client.login(os.environ.get("DISCORD_TOKEN"))
+    await client.start(os.environ.get("DISCORD_TOKEN"))
