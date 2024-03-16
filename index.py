@@ -20,12 +20,6 @@ import sentry_sdk
 import subprocess
 import shlex  # For safe command parsing
 
-# Flask
-from threading import Thread
-from flask import Flask
-# Flask app for health endpoint
-app = Flask(__name__)
-
 def configure_client():
     logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
     dotenv.load_dotenv()
@@ -51,21 +45,6 @@ def configure_client():
 
 client, gql_client = configure_client()
 
-def get_bot_info():
-  # Function to gather bot information
-  uptime = calculate_uptime()  # Implement a function to calculate uptime
-  guild_count = len(client.guilds)  # Get the number of guilds the bot is in
-  command_count = len(client.commands)  # Get the number of commands the bot has
-  return f'Uptime: {uptime}\nGuilds: {guild_count}\nCommands: {command_count}'
-
-@app.route('/health')
-def health():
-  bot_info = get_bot_info()
-  return f'OK\n{bot_info}'
-
-
-def run_flask():
-  app.run(host='0.0.0.0', port=5000)  # Change port if needed
 
 # Define a function to log events
 async def log_event(event):
@@ -399,20 +378,10 @@ async def on_event(event):
     await log_event(event)
 
 
-def run_bot():
-    @client.event
-    async def on_ready():
-        logging.log(logging.INFO, f"LC bot is ready.")
-        await client.start(os.environ.get('DISCORD_BOT_TOKEN'))
+@client.event
+async def on_ready():
+    logging.log(logging.INFO, f"LC bot is ready.")
+
 
 if __name__ == "__main__":
-    # Start both threads
-    flask_thread = Thread(target=run_flask)
-    discord_thread = Thread(target=run_bot)
-
-    flask_thread.start()
-    discord_thread.start()
-
-    # Wait for threads to finish (optional)
-    flask_thread.join()
-    discord_thread.join()
+    client.start(os.environ.get("DISCORD_TOKEN"))
